@@ -1,5 +1,5 @@
 {
-  "homework_name": "Final Project Track 2 Bonus: Go2 Low-Level Locomotion Baseline",
+  "homework_name": "Homework: Sim-to-Real Quadruped Locomotion with MuJoCo Playground",
   "robot": "Go2",
   "environment_name": "Go2JoystickFlatTerrain",
   "framework": "MuJoCo Playground + Brax PPO + MJX",
@@ -42,7 +42,7 @@
     "num_timesteps": 10000000,
     "command_range": {
       "min": [
-        0.0,
+        0.1,
         0.0,
         0.0
       ],
@@ -58,13 +58,13 @@
       0.0
     ],
     "reward_scales": {
-      "action_rate": 0.0,
-      "energy": 0.0
+      "action_rate": -0.02,
+      "energy": -0.0015
     }
   },
   "stage_2": {
     "name": "stage_2",
-    "num_timesteps": 5000000,
+    "num_timesteps": 20000000,
     "command_range": {
       "min": [
         0.0,
@@ -72,15 +72,15 @@
         0.0
       ],
       "max": [
-        1.0,
-        0.0,
-        0.0
+        2.0,
+        0.8,
+        2.0
       ]
     },
     "command_keep_prob": [
-      1.0,
-      0.0,
-      0.0
+      0.65,
+      0.8,
+      0.8
     ],
     "student_stage2_goal": {
       "command_range": {
@@ -90,15 +90,15 @@
           0.0
         ],
         "max": [
-          2.5,
-          1.25,
-          2.5
+          2.0,
+          0.8,
+          2.0
         ]
       },
       "command_keep_prob": [
-        0.7,
-        0.9,
-        0.9
+        0.65,
+        0.8,
+        0.8
       ]
     },
     "reward_scales": {
@@ -108,45 +108,50 @@
     "restore_previous_stage_checkpoint": true
   },
   "demo_rollout": {
-    "segment_seconds": 2.5,
+    "segment_seconds": 5.0,
     "segments": [
       [
-        0.8,
+        0.1,
+        0.1,
+        0.1
+      ],
+      [
         0.2,
-        0.8
+        0.1,
+        0.2
       ],
       [
-        1.6,
-        0.4,
-        1.6
+        0.5,
+        0.2,
+        0.5
       ],
       [
-        2.5,
-        1.25,
-        2.5
+        2.0,
+        0.5,
+        2.0
       ],
-    ]
+          ]
   },
   "public_eval": {
     "episode_length_seconds": 30.0,
     "safe_command_ranges": {
       "vx": [
-        -0.6,
-        0.6
+        0.1,
+        2.0
       ],
       "vy": [
-        -0.2,
-        0.2
+        0.0,
+        2.0
       ],
       "yaw": [
-        -0.6,
-        0.6
+        0.0,
+        2.0
       ]
     },
     "metrics": {
       "velocity_tracking_error": {
         "direction": "lower_better",
-        "weight": 0.35,
+        "weight": 0.45,
         "good": 0.1,
         "bad": 0.45
       },
@@ -164,13 +169,13 @@
       },
       "energy_proxy": {
         "direction": "lower_better",
-        "weight": 0.15,
+        "weight": 0.0,
         "good": 8.0,
         "bad": 40.0
       },
       "foot_slip_proxy": {
         "direction": "lower_better",
-        "weight": 0.1,
+        "weight": 0.15,
         "good": 0.02,
         "bad": 0.2
       }
@@ -178,9 +183,6 @@
   },
   "files_to_read_first": [
     "go2_pg_env/joystick.py",
-    "go2_pg_env/track.py",
-    "track_bonus/planner.py",
-    "run_track_bonus.py",
     "train.py",
     "benchmark_specs.py",
     "public_eval.py"
@@ -188,15 +190,15 @@
   "submission": {
     "required_files": [
       "best_checkpoint/",
-      "planner_config.json",
-      "track_eval/results.json",
+      "configs/colab_runtime_config.json",
+      "public_eval_bundle/public_eval.json",
+      "demo_bundle/demo.mp4",
       "short_report.pdf"
     ],
     "report_required_questions": [
       "Explain the observation, action, and reward design.",
-      "Describe your low-level command tracking changes.",
-      "Describe your learned high-level planner and training method.",
-      "Report lap completion, finish time if completed, lateral error, fall, energy, and slip metrics.",
+      "Describe what you changed and why.",
+      "Report which benchmark metrics improved or worsened.",
       "Explain why your changes may or may not help sim-to-real transfer.",
       "Describe at least one failed idea and what you learned from it."
     ]

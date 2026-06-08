@@ -66,18 +66,18 @@ def default_config() -> config_dict.ConfigDict:
         reward_config=config_dict.create(
             scales=config_dict.create(
                 # Task terms
-                tracking_lin_vel=1.0,
+                tracking_lin_vel=1.5,
                 tracking_ang_vel=0.5,
                 # Stability terms
                 lin_vel_z=-0.1,
                 ang_vel_xy=-0.05,
-                orientation=-3.0,
+                orientation=-4.0,
                 dof_pos_limits=-0.5,
                 pose=0.5,
                 termination=-1.0,
                 stand_still=-0.5,
                 # Smoothness / efficiency terms
-                torques=-0.0001,
+                torques=-0.00001,
                 action_rate=0.0,
                 energy=0.000,
                 # Foot-behavior terms

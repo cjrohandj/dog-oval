@@ -48,8 +48,8 @@
       ],
       "max": [
         1.5,
-        0.0,
-        0.0
+        1.0,
+        1.5
       ]
     },
     "command_keep_prob": [
@@ -58,8 +58,8 @@
       0.8
     ],
     "reward_scales": {
-      "action_rate": -0.001,
-      "energy": -0.0001
+      "action_rate": -0.0005,
+      "energy": -0.00005
     }
   },
   "stage_2": {
@@ -72,9 +72,9 @@
         0.0
       ],
       "max": [
+        3.0,
         1.5,
-        1.0,
-        1.5
+        3.0
       ]
     },
     "command_keep_prob": [
@@ -90,9 +90,9 @@
           0.0
         ],
         "max": [
+          3.0
           1.5,
-          1.0,
-          1.5
+          3.0
         ]
       },
       "command_keep_prob": [
@@ -102,8 +102,8 @@
       ]
     },
     "reward_scales": {
-      "action_rate": -0.001,
-      "energy": -0.0001
+      "action_rate": -0.0005,
+      "energy": -0.00005
     },
     "restore_previous_stage_checkpoint": true
   },

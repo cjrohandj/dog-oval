@@ -77,7 +77,7 @@ def default_config() -> config_dict.ConfigDict:
                 termination=-1.0,
                 stand_still=-0.5,
                 # Smoothness / efficiency terms
-                torques=-0.00001,
+                torques=-0.000005,
                 action_rate=0.0,
                 energy=0.000,
                 # Foot-behavior terms

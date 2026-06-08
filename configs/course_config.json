@@ -22,10 +22,10 @@
 "require_colab_gpu_runtime": true
 },
 "training_defaults": {
-"num_envs": 4096,
+"num_envs": 16384,
 "num_eval_envs": 128,
 "num_evals": 5,
-"batch_size": 256,
+"batch_size": 1024,
 "policy_hidden_layer_sizes": [
 256,
 256,
@@ -47,7 +47,7 @@
 0.0
 ],
 "max": [
-1.5,
+1.8,
 0.0,
 0.0
 ]
@@ -58,8 +58,8 @@
 0.0
 ],
 "reward_scales": {
-"action_rate": -0.005,
-"energy": -0.0004
+"action_rate": -0.001,
+"energy": -0.0001
 }
 },
 "stage_2": {
@@ -72,13 +72,13 @@
 0.0
 ],
 "max": [
-1.5,
-0.6,
-1.5
+1.7,
+0.8,
+1.7
 ]
 },
 "command_keep_prob": [
-0.65,
+1.0,
 0.8,
 0.8
 ],
@@ -90,20 +90,20 @@
 0.0
 ],
 "max": [
-1.5,
-0.6,
-1.5
+1.7,
+0.8,
+1.7
 ]
 },
 "command_keep_prob": [
-0.65,
+1.0,
 0.8,
 0.8
 ]
 },
 "reward_scales": {
-"action_rate": -0.005,
-"energy": -0.0004
+"action_rate": -0.001,
+"energy": -0.0001
 },
 "restore_previous_stage_checkpoint": true
 },
@@ -121,7 +121,7 @@
 0.0
 ],
 [
-1.5,
+1.7,
 0.0,
 0.0
 ],
@@ -141,9 +141,9 @@
 1.0
 ],
 [
-1.5,
-0.6,
-1.5
+1.7,
+0.7,
+1.7
 ],
 [
 1.5,

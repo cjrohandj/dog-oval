@@ -72,12 +72,12 @@ def default_config() -> config_dict.ConfigDict:
                 lin_vel_z=-0.3,
                 ang_vel_xy=-0.05,
                 orientation=-5.0,
-                dof_pos_limits=-1.0,
+                dof_pos_limits=-0.5,
                 pose=0.4,
                 termination=-1.0,
-                stand_still=-1.0,
+                stand_still=-0.5,
                 # Smoothness / efficiency terms
-                torques=-0.0001,
+                torques=-0.00001,
                 action_rate=-0.01,
                 energy=-0.001,
                 # Foot-behavior terms

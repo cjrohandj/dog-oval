@@ -66,28 +66,28 @@ def default_config() -> config_dict.ConfigDict:
         reward_config=config_dict.create(
             scales=config_dict.create(
                 # Task terms
-                tracking_lin_vel=1.5,
+                tracking_lin_vel=1.0,
                 tracking_ang_vel=0.5,
                 # Stability terms
-                lin_vel_z=-0.1,
+                lin_vel_z=-0.3,
                 ang_vel_xy=-0.05,
-                orientation=-4.0,
-                dof_pos_limits=-0.5,
-                pose=0.5,
+                orientation=-5.0,
+                dof_pos_limits=-1.0,
+                pose=0.4,
                 termination=-1.0,
-                stand_still=-0.5,
+                stand_still=-1.0,
                 # Smoothness / efficiency terms
-                torques=-0.000005,
-                action_rate=0.0,
-                energy=0.000,
+                torques=-0.0001,
+                action_rate=-0.01,
+                energy=-0.001,
                 # Foot-behavior terms
-                feet_clearance=-2.0,
-                feet_height=-0.1,
-                feet_slip=-0.1,
-                feet_air_time=0.1,
+                feet_clearance=-0.25,
+                feet_height=-0.025,
+                feet_slip=-0.3,
+                feet_air_time=0.45,
             ),
             tracking_sigma=0.25,
-            max_foot_height=0.15,
+            max_foot_height=0.1,
         ),
         pert_config=config_dict.create(
             enable=False,
@@ -100,12 +100,12 @@ def default_config() -> config_dict.ConfigDict:
             min=[-1.0, -0.4, -1.0],
             max=[1.0, 0.4, 1.0],
             # Probability that each command channel stays active
-            b=[0.9, 0.25, 0.5],
+            b=[0.2, 0.6, 0.6],
             # Stage metadata is injected from configs/course_config.json.
             stage_name="stage_1",
             student_stage2_goal_min=[-1.0, -0.4, -1.0],
             student_stage2_goal_max=[1.0, 0.4, 1.0],
-            student_stage2_goal_b=[0.9, 0.25, 0.5],
+            student_stage2_goal_b=[0.2, 0.6, 0.6],
         ),
         impl="jax",
         naconmax=4 * 8192,
@@ -263,6 +263,11 @@ class Joystick(go2_base.Go2Env):
 
         metrics = {f"reward/{name}": jp.zeros(()) for name in self._config.reward_config.scales.keys()}
         metrics["swing_peak"] = jp.zeros(())
+        metrics["tracking/lin_vel_error"] = jp.zeros(())
+        metrics["tracking/yaw_error"] = jp.zeros(())
+        metrics["tracking/energy_usage"] = jp.zeros(())
+        metrics["tracking/slip_rate"] = jp.zeros(())
+        metrics["tracking/fall_rate"] = jp.zeros(())
 
         obs = self._get_obs(data, info)
         reward, done = jp.zeros(2)
@@ -288,8 +293,9 @@ class Joystick(go2_base.Go2Env):
         obs = self._get_obs(data, state.info)
         done = self._get_termination(data)
 
-        rewards = self._get_reward(data, action, state.info, state.metrics, done, first_contact, contact)
-        rewards = {key: value * self._config.reward_config.scales[key] for key, value in rewards.items()}
+        command = state.info["command"]
+        raw_rewards = self._get_reward(data, action, state.info, state.metrics, done, first_contact, contact)
+        rewards = {key: value * self._config.reward_config.scales[key] for key, value in raw_rewards.items()}
         reward = jp.clip(sum(rewards.values()) * self.dt, 0.0, 10000.0)
 
         state.info["last_last_act"] = state.info["last_act"]
@@ -314,6 +320,16 @@ class Joystick(go2_base.Go2Env):
         for key, value in rewards.items():
             state.metrics[f"reward/{key}"] = value
         state.metrics["swing_peak"] = jp.mean(state.info["swing_peak"])
+        state.metrics["tracking/lin_vel_error"] = jp.linalg.norm(
+            command[:2] - self.get_local_linvel(data)[:2]
+        )
+        state.metrics["tracking/yaw_error"] = jp.abs(command[2] - self.get_gyro(data)[2])
+        state.metrics["tracking/energy_usage"] = raw_rewards["energy"]
+
+        feet_vel = data.sensordata[self._foot_linvel_sensor_adr]
+        foot_slip_speed = jp.linalg.norm(feet_vel[..., :2], axis=-1) * contact
+        state.metrics["tracking/slip_rate"] = jp.sum(foot_slip_speed) / jp.maximum(jp.sum(contact), 1)
+        state.metrics["tracking/fall_rate"] = done.astype(jp.float32)
 
         return state.replace(data=data, obs=obs, reward=reward, done=done.astype(reward.dtype))
 
@@ -566,7 +582,11 @@ class Joystick(go2_base.Go2Env):
         3. increase the probability of non-zero `vy` and `yaw_rate` commands
         """
         del current_command
-        return self._cmd_min, self._cmd_max, self._cmd_b
+        return (
+        self._student_stage2_goal_min,
+        self._student_stage2_goal_max,
+        self._student_stage2_goal_b,
+    )
 
     def sample_command(self, rng: jax.Array, current_command: jax.Array) -> jax.Array:
         rng, y_rng, w_rng, z_rng = jax.random.split(rng, 4)

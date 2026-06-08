@@ -22,7 +22,7 @@
     "require_colab_gpu_runtime": true
   },
   "training_defaults": {
-    "num_envs": 102400,
+    "num_envs": 20400,
     "num_eval_envs": 128,
     "num_evals": 5,
     "batch_size": 256,

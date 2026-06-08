@@ -22,7 +22,7 @@
     "require_colab_gpu_runtime": true
   },
   "training_defaults": {
-    "num_envs": 1024,
+    "num_envs": 102400,
     "num_eval_envs": 128,
     "num_evals": 5,
     "batch_size": 256,
@@ -47,7 +47,7 @@
         0.0
       ],
       "max": [
-        0.8,
+        3.0,
         0.0,
         0.0
       ]
@@ -58,8 +58,8 @@
       0.0
     ],
     "reward_scales": {
-      "action_rate": -0.02,
-      "energy": -0.0015
+      "action_rate": 0.0,
+      "energy": 0.0
     }
   },
   "stage_2": {

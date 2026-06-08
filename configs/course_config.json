@@ -47,7 +47,7 @@
         0.0
       ],
       "max": [
-        1.5,
+        3.0,
         0.0,
         0.0
       ]
@@ -58,8 +58,8 @@
       0.8
     ],
     "reward_scales": {
-      "action_rate": -0.0001,
-      "energy": -0.00001
+      "action_rate": -0.002,
+      "energy": -0.0002
     }
   },
   "stage_2": {
@@ -102,8 +102,8 @@
       ]
     },
     "reward_scales": {
-      "action_rate": -0.0001,
-      "energy": -0.00001
+      "action_rate": -0.001,
+      "energy": -0.0001
     },
     "restore_previous_stage_checkpoint": true
   },
@@ -111,7 +111,7 @@
     "segment_seconds": 5.0,
     "segments": [
       [
-        0.5,
+        2.5,
         0.0,
         0.0
       ],

@@ -42,24 +42,24 @@
     "num_timesteps": 10000000,
     "command_range": {
       "min": [
-        0.1,
+        0.5,
         0.0,
         0.0
       ],
       "max": [
-        3.0,
+        2.0,
         0.0,
         0.0
       ]
     },
     "command_keep_prob": [
       1.0,
-      0.0,
-      0.0
+      0.8,
+      0.8
     ],
     "reward_scales": {
-      "action_rate": 0.0,
-      "energy": 0.0
+      "action_rate": -0.0001,
+      "energy": -0.00001
     }
   },
   "stage_2": {
@@ -67,43 +67,43 @@
     "num_timesteps": 20000000,
     "command_range": {
       "min": [
-        0.0,
+        1.0,
         0.0,
         0.0
       ],
       "max": [
-        2.0,
-        0.8,
-        2.0
+        3.0,
+        1.5,
+        3.0
       ]
     },
     "command_keep_prob": [
-      0.65,
+      1.0,
       0.8,
       0.8
     ],
     "student_stage2_goal": {
       "command_range": {
         "min": [
-          0.0,
+          1.0,
           0.0,
           0.0
         ],
         "max": [
-          2.0,
-          0.8,
-          2.0
+          3.0,
+          1.5,
+          3.0
         ]
       },
       "command_keep_prob": [
-        0.65,
+        1.0,
         0.8,
         0.8
       ]
     },
     "reward_scales": {
-      "action_rate": 0.0,
-      "energy": 0.0
+      "action_rate": -0.0001,
+      "energy": -0.00001
     },
     "restore_previous_stage_checkpoint": true
   },
@@ -111,24 +111,24 @@
     "segment_seconds": 5.0,
     "segments": [
       [
-        0.1,
-        0.1,
-        0.1
-      ],
-      [
-        0.2,
-        0.1,
-        0.2
-      ],
-      [
         0.5,
-        0.2,
-        0.5
+        0.0,
+        0.0
+      ],
+      [
+        1.5,
+        1.0,
+        1.5
+      ],
+      [
+        3.0,
+        1.5,
+        3.0
       ],
       [
         2.0,
-        0.5,
-        2.0
+        0.0,
+        0.0
       ]
           ]
   },

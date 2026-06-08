@@ -58,8 +58,8 @@
       0.8
     ],
     "reward_scales": {
-      "action_rate": -0.0005,
-      "energy": -0.00005
+      "action_rate": -0.005,
+      "energy": -0.0005
     }
   },
   "stage_2": {
@@ -102,8 +102,8 @@
       ]
     },
     "reward_scales": {
-      "action_rate": -0.0005,
-      "energy": -0.00005
+      "action_rate": -0.0025,
+      "energy": -0.00025
     },
     "restore_previous_stage_checkpoint": true
   },

@@ -73,7 +73,7 @@ def default_config() -> config_dict.ConfigDict:
                 ang_vel_xy=-0.05,
                 orientation=-5.0,
                 dof_pos_limits=-0.1,
-                pose=0.4,
+                pose=0.2,
                 termination=-1.0,
                 stand_still=-0.5,
                 # Smoothness / efficiency terms
@@ -83,8 +83,8 @@ def default_config() -> config_dict.ConfigDict:
                 # Foot-behavior terms
                 feet_clearance=-0.2,
                 feet_height=-0.02,
-                feet_slip=-0.4,
-                feet_air_time=0.05,
+                feet_slip=-0.2,
+                feet_air_time=0.2,
             ),
             tracking_sigma=0.25,
             max_foot_height=0.1,

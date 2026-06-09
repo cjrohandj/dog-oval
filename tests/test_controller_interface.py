@@ -58,6 +58,38 @@ def test_planner_entry_point_uses_track_observation() -> None:
     assert np.all(np.isfinite(command))
 
 
+def test_learned_mlp_planner_loads_relative_weights(tmp_path) -> None:
+    weights_path = tmp_path / "planner_weights.npz"
+    np.savez(
+        weights_path,
+        W0=np.zeros((5, 4), dtype=np.float32),
+        b0=np.zeros(4, dtype=np.float32),
+        W1=np.zeros((4, 3), dtype=np.float32),
+        b1=np.asarray([0.0, 0.0, 0.0], dtype=np.float32),
+    )
+    config_path = tmp_path / "planner_config.json"
+    config_path.write_text(
+        (
+            "{"
+            '"planner_type": "learned_mlp", '
+            '"weights_path": "planner_weights.npz", '
+            '"stand_seconds": 0.0, '
+            '"vx_limit_mps": 1.2, '
+            '"vy_limit_mps": 0.4, '
+            '"yaw_rate_limit_radps": 0.7'
+            "}"
+        ),
+        encoding="utf-8",
+    )
+    planner = StarterTrackPlanner.load(config_path)
+    obs = build_track_controller_observation(
+        qpos=np.asarray([0.0, -18.25, 0.31, 1.0, 0.0, 0.0, 0.0] + [0.0] * 12, dtype=np.float32),
+        track=StandardOvalTrack(),
+    )
+    command = planner.command(obs, t=1.0)
+    np.testing.assert_allclose(command, np.asarray([0.6, 0.0, 0.0], dtype=np.float32))
+
+
 def test_track_scene_compiles_single_dog_when_assets_are_available() -> None:
     try:
         resolve_go2_asset_model_dir()

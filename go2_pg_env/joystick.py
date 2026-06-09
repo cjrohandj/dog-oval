@@ -86,7 +86,7 @@ def default_config() -> config_dict.ConfigDict:
                 feet_slip=-0.2,
                 feet_air_time=0.2,
             ),
-            tracking_sigma=0.21,
+            tracking_sigma=0.15,
             max_foot_height=0.3,
         ),
         pert_config=config_dict.create(

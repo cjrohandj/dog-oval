@@ -180,6 +180,9 @@ def _run_eval(
             + 0.15 * float(scores["line_keeping_score"])
             + 0.05 * float(scores["stability_score"])
         )
+        metrics = payload["metrics"]
+        if bool(metrics.get("fall")) or bool(metrics.get("boundary_violation")):
+            fitness *= 0.55
         return {
             "fitness": float(fitness),
             "official_composite_score": float(scores["composite_score"]),
@@ -187,6 +190,8 @@ def _run_eval(
             "speed_score": float(scores["speed_score"]),
             "line_keeping_score": float(scores["line_keeping_score"]),
             "stability_score": float(scores["stability_score"]),
+            "fall": float(bool(metrics.get("fall"))),
+            "boundary_violation": float(bool(metrics.get("boundary_violation"))),
         }
     except Exception:
         return {
@@ -196,6 +201,8 @@ def _run_eval(
             "speed_score": -1.0,
             "line_keeping_score": -1.0,
             "stability_score": -1.0,
+            "fall": -1.0,
+            "boundary_violation": -1.0,
         }
 
 
@@ -241,6 +248,8 @@ def _evaluate_candidate(
         "speed_score": float(eval_result["speed_score"]),
         "line_keeping_score": float(eval_result["line_keeping_score"]),
         "stability_score": float(eval_result["stability_score"]),
+        "fall": float(eval_result["fall"]),
+        "boundary_violation": float(eval_result["boundary_violation"]),
         "candidate_dir": str(candidate_dir),
         "planner_path": str(planner_path),
         "vector": vector,
@@ -331,6 +340,8 @@ def main() -> None:
                 "speed_score": float(result["speed_score"]),
                 "line_keeping_score": float(result["line_keeping_score"]),
                 "stability_score": float(result["stability_score"]),
+                "fall": float(result["fall"]),
+                "boundary_violation": float(result["boundary_violation"]),
                 "candidate_dir": result["candidate_dir"],
             }
             records.append(record)

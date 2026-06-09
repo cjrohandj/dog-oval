@@ -1,0 +1,11 @@
+{
+  "planner_type": "learned_mlp",
+  "weights_path": "../artifacts/highlevel_train/planner_weights.npz",
+  "stand_seconds": 0.0,
+  "vx_limit_mps": 1.2,
+  "vy_limit_mps": 0.4,
+  "yaw_rate_limit_radps": 0.7,
+  "track_length_m": 200.0,
+  "turn_radius_m": 18.25,
+  "half_width_m": 2.0
+}

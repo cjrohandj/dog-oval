@@ -174,13 +174,18 @@ def _run_eval(
         subprocess.run(cmd, cwd=ROOT, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
         payload = json.loads((output_dir / "results.json").read_text(encoding="utf-8"))
         scores = payload["scores"]
-        fitness = (
-            0.60 * float(scores["completion_score"])
-            + 0.20 * float(scores["speed_score"])
-            + 0.15 * float(scores["line_keeping_score"])
-            + 0.05 * float(scores["stability_score"])
-        )
         metrics = payload["metrics"]
+        finish_time = metrics.get("finish_time")
+        finish_score = 0.0
+        if finish_time is not None:
+            finish_score = float(np.clip((float(eval_seconds) - float(finish_time)) / max(float(eval_seconds), 1e-6), 0.0, 1.0))
+        fitness = (
+            0.30 * float(scores["completion_score"])
+            + 0.20 * float(scores["speed_score"])
+            + 0.05 * float(scores["line_keeping_score"])
+            + 0.05 * float(scores["stability_score"])
+            + 0.40 * finish_score
+        )
         if bool(metrics.get("fall")) or bool(metrics.get("boundary_violation")):
             fitness *= 0.55
         return {
@@ -190,6 +195,8 @@ def _run_eval(
             "speed_score": float(scores["speed_score"]),
             "line_keeping_score": float(scores["line_keeping_score"]),
             "stability_score": float(scores["stability_score"]),
+            "finish_score": float(finish_score),
+            "finish_time": -1.0 if finish_time is None else float(finish_time),
             "fall": float(bool(metrics.get("fall"))),
             "boundary_violation": float(bool(metrics.get("boundary_violation"))),
         }
@@ -201,6 +208,8 @@ def _run_eval(
             "speed_score": -1.0,
             "line_keeping_score": -1.0,
             "stability_score": -1.0,
+            "finish_score": -1.0,
+            "finish_time": -1.0,
             "fall": -1.0,
             "boundary_violation": -1.0,
         }
@@ -248,6 +257,8 @@ def _evaluate_candidate(
         "speed_score": float(eval_result["speed_score"]),
         "line_keeping_score": float(eval_result["line_keeping_score"]),
         "stability_score": float(eval_result["stability_score"]),
+        "finish_score": float(eval_result["finish_score"]),
+        "finish_time": float(eval_result["finish_time"]),
         "fall": float(eval_result["fall"]),
         "boundary_violation": float(eval_result["boundary_violation"]),
         "candidate_dir": str(candidate_dir),
@@ -340,6 +351,8 @@ def main() -> None:
                 "speed_score": float(result["speed_score"]),
                 "line_keeping_score": float(result["line_keeping_score"]),
                 "stability_score": float(result["stability_score"]),
+                "finish_score": float(result["finish_score"]),
+                "finish_time": float(result["finish_time"]),
                 "fall": float(result["fall"]),
                 "boundary_violation": float(result["boundary_violation"]),
                 "candidate_dir": result["candidate_dir"],
@@ -404,7 +417,7 @@ def main() -> None:
         "population": int(args.population),
         "elite_count": int(args.elite_count),
         "eval_seconds": float(args.eval_seconds),
-        "fitness_formula": "0.60*completion_score + 0.20*speed_score + 0.15*line_keeping_score + 0.05*stability_score",
+        "fitness_formula": "0.30*completion_score + 0.20*speed_score + 0.05*line_keeping_score + 0.05*stability_score + 0.40*finish_score, where finish_score=max((eval_seconds-finish_time)/eval_seconds,0) for completed laps only; then multiply by 0.55 on fall/boundary_violation",
         "best_fitness": float(best_score),
         "best_planner_config": str(output_dir / "best" / "planner_config.json"),
         "best_weights": str(output_dir / "best" / "planner_weights.npz"),

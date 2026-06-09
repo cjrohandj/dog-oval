@@ -152,7 +152,7 @@ def _run_eval(
     output_dir: Path,
     eval_seconds: float,
     force_cpu: bool,
-) -> float:
+) -> dict[str, float]:
     cmd = [
         sys.executable,
         "run_track_bonus.py",
@@ -173,9 +173,30 @@ def _run_eval(
     try:
         subprocess.run(cmd, cwd=ROOT, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
         payload = json.loads((output_dir / "results.json").read_text(encoding="utf-8"))
-        return float(payload["scores"]["composite_score"])
+        scores = payload["scores"]
+        fitness = (
+            0.60 * float(scores["completion_score"])
+            + 0.20 * float(scores["speed_score"])
+            + 0.15 * float(scores["line_keeping_score"])
+            + 0.05 * float(scores["stability_score"])
+        )
+        return {
+            "fitness": float(fitness),
+            "official_composite_score": float(scores["composite_score"]),
+            "completion_score": float(scores["completion_score"]),
+            "speed_score": float(scores["speed_score"]),
+            "line_keeping_score": float(scores["line_keeping_score"]),
+            "stability_score": float(scores["stability_score"]),
+        }
     except Exception:
-        return -1.0
+        return {
+            "fitness": -1.0,
+            "official_composite_score": -1.0,
+            "completion_score": -1.0,
+            "speed_score": -1.0,
+            "line_keeping_score": -1.0,
+            "stability_score": -1.0,
+        }
 
 
 def _evaluate_candidate(
@@ -204,7 +225,7 @@ def _evaluate_candidate(
         vy_limit=vy_limit,
         yaw_limit=yaw_limit,
     )
-    score = _run_eval(
+    eval_result = _run_eval(
         checkpoint_dir=checkpoint_dir,
         planner_path=planner_path,
         config_path=config_path,
@@ -214,7 +235,12 @@ def _evaluate_candidate(
     )
     return {
         "candidate": cand_idx,
-        "score": score,
+        "fitness": float(eval_result["fitness"]),
+        "official_composite_score": float(eval_result["official_composite_score"]),
+        "completion_score": float(eval_result["completion_score"]),
+        "speed_score": float(eval_result["speed_score"]),
+        "line_keeping_score": float(eval_result["line_keeping_score"]),
+        "stability_score": float(eval_result["stability_score"]),
         "candidate_dir": str(candidate_dir),
         "planner_path": str(planner_path),
         "vector": vector,
@@ -295,9 +321,18 @@ def main() -> None:
         eval_results.sort(key=lambda item: int(item["candidate"]))
         for result in eval_results:
             cand_idx = int(result["candidate"])
-            score = float(result["score"])
+            score = float(result["fitness"])
             vector = np.asarray(result["vector"], dtype=np.float32)
-            record = {"candidate": cand_idx, "score": score, "candidate_dir": result["candidate_dir"]}
+            record = {
+                "candidate": cand_idx,
+                "fitness": score,
+                "official_composite_score": float(result["official_composite_score"]),
+                "completion_score": float(result["completion_score"]),
+                "speed_score": float(result["speed_score"]),
+                "line_keeping_score": float(result["line_keeping_score"]),
+                "stability_score": float(result["stability_score"]),
+                "candidate_dir": result["candidate_dir"],
+            }
             records.append(record)
             if score > best_score:
                 best_score = score
@@ -313,12 +348,23 @@ def main() -> None:
                     yaw_limit=float(args.yaw_rate_limit_radps),
                 )
                 (output_dir / "best_score.json").write_text(
-                    json.dumps({"score": best_score, "planner_config": str(best_planner_path)}, indent=2),
+                    json.dumps(
+                        {
+                            "fitness": best_score,
+                            "official_composite_score": float(result["official_composite_score"]),
+                            "planner_config": str(best_planner_path),
+                        },
+                        indent=2,
+                    ),
                     encoding="utf-8",
                 )
-            print(f"iter={iteration} cand={cand_idx} score={score:.4f} best={best_score:.4f}", flush=True)
+            print(
+                f"iter={iteration} cand={cand_idx} fitness={score:.4f} "
+                f"official={float(result['official_composite_score']):.4f} best={best_score:.4f}",
+                flush=True,
+            )
 
-        ranked = sorted(zip(candidates, records), key=lambda item: item[1]["score"], reverse=True)
+        ranked = sorted(zip(candidates, records), key=lambda item: item[1]["fitness"], reverse=True)
         elite = ranked[: max(1, min(int(args.elite_count), len(ranked)))]
         elite_vectors = np.asarray([item[0] for item in elite], dtype=np.float32)
         mean_vector = elite_vectors.mean(axis=0).astype(np.float32)
@@ -329,9 +375,10 @@ def main() -> None:
         ).astype(np.float32)
         iteration_summary = {
             "iteration": iteration,
-            "best_score": float(best_score),
-            "mean_score": float(np.mean([record["score"] for record in records])),
-            "elite_mean_score": float(np.mean([item[1]["score"] for item in elite])),
+            "best_fitness": float(best_score),
+            "mean_fitness": float(np.mean([record["fitness"] for record in records])),
+            "elite_mean_fitness": float(np.mean([item[1]["fitness"] for item in elite])),
+            "mean_official_composite_score": float(np.mean([record["official_composite_score"] for record in records])),
             "sigma_mean": float(np.mean(sigma)),
             "records": records,
         }
@@ -346,7 +393,8 @@ def main() -> None:
         "population": int(args.population),
         "elite_count": int(args.elite_count),
         "eval_seconds": float(args.eval_seconds),
-        "best_score": float(best_score),
+        "fitness_formula": "0.60*completion_score + 0.20*speed_score + 0.15*line_keeping_score + 0.05*stability_score",
+        "best_fitness": float(best_score),
         "best_planner_config": str(output_dir / "best" / "planner_config.json"),
         "best_weights": str(output_dir / "best" / "planner_weights.npz"),
     }

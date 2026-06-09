@@ -67,7 +67,7 @@ def default_config() -> config_dict.ConfigDict:
             scales=config_dict.create(
                 # Task terms
                 tracking_lin_vel=1.0,
-                tracking_ang_vel=0.7,
+                tracking_ang_vel=1.0,
                 # Stability terms
                 lin_vel_z=-0.01,
                 ang_vel_xy=-0.1,
@@ -86,7 +86,7 @@ def default_config() -> config_dict.ConfigDict:
                 feet_slip=-0.2,
                 feet_air_time=0.2,
             ),
-            tracking_sigma=0.15,
+            tracking_sigma=0.075,
             max_foot_height=0.3,
         ),
         pert_config=config_dict.create(

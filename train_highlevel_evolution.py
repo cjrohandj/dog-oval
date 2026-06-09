@@ -16,6 +16,7 @@ by `track_bonus.planner.StarterTrackPlanner` when `planner_type=learned_mlp`.
 from __future__ import annotations
 
 import argparse
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import json
 from dataclasses import dataclass
 from pathlib import Path
@@ -51,6 +52,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--iterations", type=int, default=6)
     parser.add_argument("--population", type=int, default=12)
     parser.add_argument("--elite-count", type=int, default=4)
+    parser.add_argument("--parallel-evals", type=int, default=1)
     parser.add_argument("--eval-seconds", type=float, default=45.0)
     parser.add_argument("--init-sigma", type=float, default=0.08)
     parser.add_argument("--min-sigma", type=float, default=0.02)
@@ -176,6 +178,49 @@ def _run_eval(
         return -1.0
 
 
+def _evaluate_candidate(
+    *,
+    cand_idx: int,
+    vector: np.ndarray,
+    iteration: int,
+    output_dir: Path,
+    spec: WeightsSpec,
+    checkpoint_dir: Path,
+    config_path: Path,
+    eval_seconds: float,
+    force_cpu: bool,
+    stand_seconds: float,
+    vx_limit: float,
+    vy_limit: float,
+    yaw_limit: float,
+) -> dict[str, Any]:
+    candidate_dir = output_dir / "candidates" / f"iter_{iteration:02d}_cand_{cand_idx:02d}"
+    _, planner_path = _write_candidate(
+        candidate_dir=candidate_dir,
+        vector=vector,
+        spec=spec,
+        stand_seconds=stand_seconds,
+        vx_limit=vx_limit,
+        vy_limit=vy_limit,
+        yaw_limit=yaw_limit,
+    )
+    score = _run_eval(
+        checkpoint_dir=checkpoint_dir,
+        planner_path=planner_path,
+        config_path=config_path,
+        output_dir=candidate_dir / "eval",
+        eval_seconds=eval_seconds,
+        force_cpu=force_cpu,
+    )
+    return {
+        "candidate": cand_idx,
+        "score": score,
+        "candidate_dir": str(candidate_dir),
+        "planner_path": str(planner_path),
+        "vector": vector,
+    }
+
+
 def main() -> None:
     args = parse_args()
     rng = np.random.default_rng(int(args.seed))
@@ -218,26 +263,41 @@ def main() -> None:
             candidates.append((mean_vector + sigma * noise).astype(np.float32))
 
         records: list[dict[str, Any]] = []
-        for cand_idx, vector in enumerate(candidates):
-            candidate_dir = output_dir / "candidates" / f"iter_{iteration:02d}_cand_{cand_idx:02d}"
-            _, planner_path = _write_candidate(
-                candidate_dir=candidate_dir,
-                vector=vector,
-                spec=spec,
-                stand_seconds=float(args.stand_seconds),
-                vx_limit=float(args.vx_limit_mps),
-                vy_limit=float(args.vy_limit_mps),
-                yaw_limit=float(args.yaw_rate_limit_radps),
-            )
-            score = _run_eval(
-                checkpoint_dir=args.checkpoint_dir.resolve(),
-                planner_path=planner_path,
-                config_path=args.config.resolve(),
-                output_dir=candidate_dir / "eval",
-                eval_seconds=float(args.eval_seconds),
-                force_cpu=bool(args.force_cpu),
-            )
-            record = {"candidate": cand_idx, "score": score, "candidate_dir": str(candidate_dir)}
+        parallel_evals = max(1, int(args.parallel_evals))
+        eval_kwargs = {
+            "iteration": iteration,
+            "output_dir": output_dir,
+            "spec": spec,
+            "checkpoint_dir": args.checkpoint_dir.resolve(),
+            "config_path": args.config.resolve(),
+            "eval_seconds": float(args.eval_seconds),
+            "force_cpu": bool(args.force_cpu),
+            "stand_seconds": float(args.stand_seconds),
+            "vx_limit": float(args.vx_limit_mps),
+            "vy_limit": float(args.vy_limit_mps),
+            "yaw_limit": float(args.yaw_rate_limit_radps),
+        }
+        if parallel_evals == 1:
+            eval_results = [
+                _evaluate_candidate(cand_idx=cand_idx, vector=vector, **eval_kwargs)
+                for cand_idx, vector in enumerate(candidates)
+            ]
+        else:
+            eval_results = []
+            with ThreadPoolExecutor(max_workers=parallel_evals) as executor:
+                futures = [
+                    executor.submit(_evaluate_candidate, cand_idx=cand_idx, vector=vector, **eval_kwargs)
+                    for cand_idx, vector in enumerate(candidates)
+                ]
+                for future in as_completed(futures):
+                    eval_results.append(future.result())
+
+        eval_results.sort(key=lambda item: int(item["candidate"]))
+        for result in eval_results:
+            cand_idx = int(result["candidate"])
+            score = float(result["score"])
+            vector = np.asarray(result["vector"], dtype=np.float32)
+            record = {"candidate": cand_idx, "score": score, "candidate_dir": result["candidate_dir"]}
             records.append(record)
             if score > best_score:
                 best_score = score

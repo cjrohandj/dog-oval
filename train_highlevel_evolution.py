@@ -180,11 +180,11 @@ def _run_eval(
         if finish_time is not None:
             finish_score = float(2500.0 / max(float(finish_time) ** 2, 1e-6))
         fitness = (
-            0.30 * float(scores["completion_score"])
+            0.50 * float(scores["completion_score"])
             + 0.20 * float(scores["speed_score"])
             + 0.05 * float(scores["line_keeping_score"])
             + 0.05 * float(scores["stability_score"])
-            + 0.40 * finish_score
+            + 0.20 * finish_score
         )
         if bool(metrics.get("fall")) or bool(metrics.get("boundary_violation")):
             fitness *= 0.55

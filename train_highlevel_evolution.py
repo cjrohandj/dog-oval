@@ -178,16 +178,8 @@ def _run_eval(
         finish_time = metrics.get("finish_time")
         finish_score = 0.0
         if finish_time is not None:
-            finish_score = float(2500.0 / max(float(finish_time), 1e-6) ** 2)
-        fitness = (
-            0.30 * float(scores["completion_score"])
-            + 0.20 * float(scores["speed_score"])
-            + 0.05 * float(scores["line_keeping_score"])
-            + 0.05 * float(scores["stability_score"])
-            + 0.40 * finish_score
-        )
-        if bool(metrics.get("fall")) or bool(metrics.get("boundary_violation")):
-            fitness *= 0.55
+            finish_score = float(1.0 / max(float(finish_time), 1e-6))
+        fitness = finish_score
         return {
             "fitness": float(fitness),
             "official_composite_score": float(scores["composite_score"]),
@@ -417,7 +409,7 @@ def main() -> None:
         "population": int(args.population),
         "elite_count": int(args.elite_count),
         "eval_seconds": float(args.eval_seconds),
-        "fitness_formula": "0.30*completion_score + 0.20*speed_score + 0.05*line_keeping_score + 0.05*stability_score + 0.40*(2500/finish_time^2 for completed laps, else 0); then multiply by 0.55 on fall/boundary_violation",
+        "fitness_formula": "1/finish_time for completed laps, else 0",
         "best_fitness": float(best_score),
         "best_planner_config": str(output_dir / "best" / "planner_config.json"),
         "best_weights": str(output_dir / "best" / "planner_weights.npz"),

@@ -74,13 +74,13 @@
 "max": [
 5.0,
 0.2,
-0.5
+0.7
 ]
 },
 "command_keep_prob": [
 1.0,
 0.2,
-0.5
+0.7
 ],
 "student_stage2_goal": {
 "command_range": {
